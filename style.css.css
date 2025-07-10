@@ -1,0 +1,52 @@
+/* Custom card styling */
+.prediction-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 10px 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.prediction-text {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.confidence-text {
+    font-size: 1.2rem;
+    color: #6c757d;
+}
+
+/* Progress bar */
+.progress-bar {
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    margin: 15px 0;
+}
+
+.progress {
+    height: 100%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #4ECDC4 0%, #45B7D1 100%);
+    transition: width 0.5s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
