@@ -1,0 +1,34 @@
+name: CI/CD Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      - name: Run tests
+        run: |
+          pytest --cov=./ --cov-report=xml
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to Streamlit
+        uses: streamlit/streamlit-actions@v0.1.0
+        with:
+          streamlitToken: ${{ secrets.STREAMLIT_TOKEN }}
+          appFile: "rice_app.py"
