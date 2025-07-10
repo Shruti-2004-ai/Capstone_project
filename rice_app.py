@@ -123,8 +123,7 @@ st.set_page_config(
 
 def main():
     model = load_model()
-    
-    # Custom CSS
+
     st.markdown("""
     <style>
         .main {padding-top: 1rem;}
@@ -133,109 +132,108 @@ def main():
         .st-at {background-color: #ffffff;}
     </style>
     """, unsafe_allow_html=True)
-    
+
     st.title("🍚 Rice Variety Classifier")
     st.markdown("Upload an image of rice grains to identify the variety")
-    
-    # Main content columns
+
     col1, col2 = st.columns([1, 2], gap="large")
-    
+
     with col1:
-        uploaded = st.file_uploader(
-            "Choose an image...", 
-            type=["jpg", "jpeg", "png"],
-            accept_multiple_files=False,
-            key="file_uploader"
-        )
-        
+        uploaded = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"], key="file_uploader")
+
         if uploaded:
             try:
                 img = Image.open(uploaded)
-                st.image(
-                    img,
-                    caption="Uploaded Image",
-                    use_column_width=True,
-                    output_format="auto"
-                )
-                
-                # Image metadata
+                st.image(img, caption="Uploaded Image", use_column_width=True)
+
                 with st.expander("Image Details"):
                     st.write(f"**Format:** {img.format}")
                     st.write(f"**Size:** {img.size}")
                     st.write(f"**Mode:** {img.mode}")
-                    
+
+                # Save image to session state
+                st.session_state["img"] = img
+                st.session_state["img_name"] = uploaded.name
+
             except UnidentifiedImageError:
                 st.error("Invalid image file. Please upload a valid JPG, PNG, or JPEG file.")
             except Exception as e:
                 st.error(f"Error loading image: {str(e)}")
-    
+
     with col2:
-        if uploaded and st.button("Classify", type="primary", use_container_width=True):
-            with st.spinner("Analyzing rice grains..."):
-                processed_img = process_image(img)
-                
-                if processed_img is not None:
-                    try:
-                        # Make prediction
-                        preds = model.predict(processed_img, verbose=0)[0]
-                        results = {CLASS_NAMES[i]: float(preds[i]) for i in range(len(CLASS_NAMES))}
-                        top_class = max(results, key=results.get)
-                        confidence = results[top_class] * 100
-                        
-                        # Log prediction
-                        log_data(
-                            PREDICTION_LOG,
-                            [
+        if st.button("Classify", type="primary", use_container_width=True):
+            if "img" in st.session_state:
+                with st.spinner("Analyzing rice grains..."):
+                    processed_img = process_image(st.session_state["img"])
+                    if processed_img is not None:
+                        try:
+                            preds = model.predict(processed_img, verbose=0)[0]
+                            top_class = CLASS_NAMES[np.argmax(preds)]
+                            confidence = max(0, min(100, float(np.max(preds)) * 100))
+
+                            # Store results
+                            st.session_state["prediction"] = {
+                                "class": top_class,
+                                "confidence": confidence,
+                                "probs": preds.tolist()
+                            }
+
+                            # Log
+                            log_data(PREDICTION_LOG, [
                                 datetime.datetime.now().isoformat(),
-                                uploaded.name,
+                                st.session_state.get("img_name", "unknown"),
                                 top_class,
                                 confidence,
                                 str(preds.tolist())
-                            ]
-                        )
-                        
-                        # Display results
-                        st.success(f"**Prediction:** {top_class}")
-                        st.metric("Confidence", f"{confidence:.1f}%")
-                        
-                        # Show probability visualization
-                        st.pyplot(plot_probabilities(preds))
-                        
-                        # Feedback system
-                        with st.expander("✏️ Provide Feedback", expanded=False):
-                            feedback_col1, feedback_col2 = st.columns(2)
-                            
-                            with feedback_col1:
-                                actual_class = st.selectbox(
-                                    "Actual rice variety",
-                                    [""] + CLASS_NAMES,
-                                    key="feedback_class"
-                                )
-                            
-                            with feedback_col2:
-                                feedback = st.text_area(
-                                    "Comments (optional)",
-                                    placeholder="E.g., 'The rice was mixed varieties'",
-                                    key="feedback_text"
-                                )
-                            
-                            if st.button("Submit Feedback", key="feedback_btn"):
-                                if actual_class:
-                                    log_data(
-                                        FEEDBACK_LOG,
-                                        [
-                                            datetime.datetime.now().isoformat(),
-                                            top_class,
-                                            actual_class,
-                                            feedback
-                                        ]
-                                    )
-                                    st.toast("✅ Feedback submitted successfully!")
-                                else:
-                                    st.warning("Please select the actual rice variety")
-                    
-                    except Exception as e:
-                        st.error(f"Prediction failed: {str(e)}")
+                            ])
+                        except Exception as e:
+                            st.error(f"Prediction failed: {str(e)}")
+
+        # Display prediction if exists
+        if "prediction" in st.session_state:
+            pred = st.session_state["prediction"]
+            st.success(f"**Prediction:** {pred['class']}")
+            st.metric("Confidence", f"{pred['confidence']:.1f}%")
+            st.pyplot(plot_probabilities(pred["probs"]))
+            st.info("Not quite right? Provide feedback below to help us improve!")
+
+
+            # Feedback section
+            with st.expander("✏️ Provide Feedback", expanded=False):
+                feedback_col1, feedback_col2 = st.columns(2)
+
+                with feedback_col1:
+                    actual_class = st.selectbox(
+                        "Actual rice variety",
+                        [""] + CLASS_NAMES,
+                        key="feedback_class"
+                    )
+
+                with feedback_col2:
+                    feedback_text = st.text_area(
+                        "Comments (optional)",
+                        placeholder="E.g., 'The rice was mixed varieties'",
+                        key="feedback_text"
+                    )
+
+                if st.button("Submit Feedback", key="feedback_btn"):
+    try:
+        if actual_class:
+            log_data(FEEDBACK_LOG, [
+                datetime.datetime.now().isoformat(),
+                pred["class"],
+                actual_class,
+                feedback_text
+            ])
+            st.toast("✅ Feedback submitted successfully!")
+
+            # Clear feedback fields
+            st.session_state["feedback_class"] = ""
+            st.session_state["feedback_text"] = ""
+        else:
+            st.warning("Please select the actual rice variety")
+    except Exception as e:
+        st.error(f"Feedback submission failed: {str(e)}")
 
     # ====== Analytics Dashboard ======
     st.sidebar.header("📊 Analytics Dashboard")
@@ -267,10 +265,15 @@ def main():
                 # Confusion matrix
                 st.subheader("Confusion Matrix")
                 confusion = pd.crosstab(
-                    feedback_df['predicted_class'],
-                    feedback_df['actual_class'],
-                    margins=True
-                )
+    feedback_df['predicted_class'],
+    feedback_df['actual_class'],
+    margins=True
+).reindex(
+    index=CLASS_NAMES + ['All'],
+    columns=CLASS_NAMES + ['All'],
+    fill_value=0
+)
+
                 st.dataframe(confusion.style.background_gradient(cmap='Blues'))
         else:
             st.info("No feedback data yet")
