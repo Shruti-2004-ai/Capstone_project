@@ -6,8 +6,9 @@ pandas
 matplotlib
 plotly
 streamlit-extras==0.2.5
-rich==13.7.1
 seaborn
+rich==13.7.1
+
 
 
 # Development & Testing
