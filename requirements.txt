@@ -1,8 +1,8 @@
-tensorflow-cpu==2.15.0
-streamlit==1.28.0
-streamlit-extras==0.3.0
-plotly==5.15.0
-numpy==1.23.5
-pillow==10.0.0
-matplotlib==3.7.1
-pandas==2.0.3
+streamlit==1.35.0
+tensorflow==2.15.0
+pillow
+numpy
+pandas
+matplotlib
+plotly
+streamlit-extras==0.2.5
