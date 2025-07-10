@@ -11,6 +11,12 @@ import numpy as np
 from PIL import Image, UnidentifiedImageError
 import tensorflow as tf
 
+# Streamlit Cloud config
+if st.secrets.get("DEPLOYED", False):
+    MODEL_PATH = "fixed_model.keras"  # Use relative path in cloud
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Reduce cloud logs
+
+
 # ====== Configuration ======
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "fixed_model.keras")
