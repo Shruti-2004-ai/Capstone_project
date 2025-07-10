@@ -37,8 +37,8 @@ def load_model():
     """Load and warm up the model"""
     try:
         model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-        # Warm-up with correct input shape
-        warm_up_data = np.zeros((1, 224, 224, 3), dtype=np.float32)
+        # ✅ Warm-up with correct input shape
+        warm_up_data = np.zeros((1, 128, 128, 3), dtype=np.float32)
         model.predict(warm_up_data)
         return model
     except Exception as e:
