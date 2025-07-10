@@ -48,13 +48,12 @@ def load_model():
 def process_image(image):
     """Standardize image preprocessing"""
     try:
-        img = image.resize((128, 128))
-
+        img = image.resize((128, 128))  # ✅ Match model input shape
         arr = np.array(img)
         
         # Handle various image formats
         if arr.ndim == 2:  # Grayscale
-            arr = np.stack((arr,)*3, axis=-1)
+            arr = np.stack((arr,) * 3, axis=-1)
         elif arr.shape[2] == 4:  # RGBA
             arr = arr[..., :3]
             
@@ -62,6 +61,7 @@ def process_image(image):
     except Exception as e:
         st.error(f"Image processing error: {str(e)}")
         return None
+
 
 def log_data(filepath, data):
     """Thread-safe CSV logging"""
