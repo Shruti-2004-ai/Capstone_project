@@ -6,7 +6,8 @@ pandas
 matplotlib
 plotly
 streamlit-extras==0.2.5
-rich==13.7.1   # ✅ REQUIRED! Avoids crash
+rich==13.7.1
+seaborn
 
 
 # Development & Testing
