@@ -48,7 +48,8 @@ def load_model():
 def process_image(image):
     """Standardize image preprocessing"""
     try:
-        img = image.resize((224, 224))
+        img = image.resize((128, 128))
+
         arr = np.array(img)
         
         # Handle various image formats
