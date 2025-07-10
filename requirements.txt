@@ -1,4 +1,3 @@
-# Core Requirements
 streamlit==1.35.0
 tensorflow==2.15.0
 pillow
@@ -7,7 +6,8 @@ pandas
 matplotlib
 plotly
 streamlit-extras==0.2.5
-rich==13.7.1# For confusion matrix calculations
+rich==13.7.1   # ✅ REQUIRED! Avoids crash
+
 
 # Development & Testing
 pytest==7.4.0
