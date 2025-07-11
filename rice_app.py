@@ -16,7 +16,6 @@ if st.secrets.get("DEPLOYED", False):
     MODEL_PATH = "rice_classifier.keras"  # Use relative path in cloud
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Reduce cloud logs
 
-
 # ====== Configuration ======
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "rice_classifier.keras")
@@ -61,7 +60,6 @@ def process_image(image):
     except Exception as e:
         st.error(f"Image processing error: {str(e)}")
         return None
-
 
 def log_data(filepath, data):
     """Thread-safe CSV logging"""
@@ -197,44 +195,42 @@ def main():
             st.pyplot(plot_probabilities(pred["probs"]))
             st.info("Not quite right? Provide feedback below to help us improve!")
 
-
             # Feedback section
             with st.expander("✏️ Provide Feedback", expanded=False):
-                feedback_col1, feedback_col2 = st.columns(2)
+    feedback_col1, feedback_col2 = st.columns(2)
 
-                with feedback_col1:
-                    actual_class = st.selectbox(
-                        "Actual rice variety",
-                        [""] + CLASS_NAMES,
-                        key="feedback_class"
-                    )
+    with feedback_col1:
+        actual_class = st.selectbox(
+            "Actual rice variety",
+            [""] + CLASS_NAMES,
+            key="feedback_class"
+        )
 
-                with feedback_col2:
-                    feedback_text = st.text_area(
-                        "Comments (optional)",
-                        placeholder="E.g., 'The rice was mixed varieties'",
-                        key="feedback_text"
-                    )
+    with feedback_col2:
+        feedback_text = st.text_area(
+            "Comments (optional)",
+            placeholder="E.g., 'The rice was mixed varieties'",
+            key="feedback_text"
+        )
 
-                if st.button("Submit Feedback", key="feedback_btn"):
-    try:
-        if actual_class:
-            log_data(FEEDBACK_LOG, [
-                datetime.datetime.now().isoformat(),
-                pred["class"],
-                actual_class,
-                feedback_text
-            ])
-            st.toast("✅ Feedback submitted successfully!")
+    if st.button("Submit Feedback", key="feedback_btn"):
+        try:
+            if actual_class:
+                log_data(FEEDBACK_LOG, [
+                    datetime.datetime.now().isoformat(),
+                    pred["class"],
+                    actual_class,
+                    feedback_text
+                ])
+                st.toast("✅ Feedback submitted successfully!")
 
-            # Clear feedback fields
-            st.session_state["feedback_class"] = ""
-            st.session_state["feedback_text"] = ""
-        else:
-            st.warning("Please select the actual rice variety")
-    except Exception as e:
-        st.error(f"Feedback submission failed: {str(e)}")
-
+                # Clear feedback fields
+                st.session_state["feedback_class"] = ""
+                st.session_state["feedback_text"] = ""
+            else:
+                st.warning("Please select the actual rice variety")
+        except Exception as e:
+            st.error(f"Feedback submission failed: {str(e)}")
     # ====== Analytics Dashboard ======
     st.sidebar.header("📊 Analytics Dashboard")
     
@@ -265,14 +261,14 @@ def main():
                 # Confusion matrix
                 st.subheader("Confusion Matrix")
                 confusion = pd.crosstab(
-    feedback_df['predicted_class'],
-    feedback_df['actual_class'],
-    margins=True
-).reindex(
-    index=CLASS_NAMES + ['All'],
-    columns=CLASS_NAMES + ['All'],
-    fill_value=0
-)
+                    feedback_df['predicted_class'],
+                    feedback_df['actual_class'],
+                    margins=True
+                ).reindex(
+                    index=CLASS_NAMES + ['All'],
+                    columns=CLASS_NAMES + ['All'],
+                    fill_value=0
+                )
 
                 st.dataframe(confusion.style.background_gradient(cmap='Blues'))
         else:
