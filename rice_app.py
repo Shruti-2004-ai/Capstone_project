@@ -33,36 +33,36 @@ for file, headers in [(PREDICTION_LOG, ['timestamp', 'filename', 'predicted_clas
 # ====== Core Functions ======
 @st.cache_resource
 def load_model():
-    """Load model without deserialization issues by reconstructing architecture."""
+    """Load model with architecture matching saved weights"""
     if not os.path.exists(MODEL_PATH):
         st.error(f"❌ Model file not found: {MODEL_PATH}")
         st.stop()
 
     try:
-        # Rebuild the model architecture
+        # ✅ Architecture matches saved weights (Dense(64))
         model = tf.keras.Sequential([
-            tf.keras.layers.Input(shape=(128, 128, 3)),  # Removed batch_shape
+            tf.keras.layers.Input(shape=(128, 128, 3)),
             tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
             tf.keras.layers.MaxPooling2D((2, 2)),
             tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
             tf.keras.layers.MaxPooling2D((2, 2)),
             tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(128, activation='relu'),
-            tf.keras.layers.Dense(5, activation='softmax')  # Assuming 5 rice classes
+            tf.keras.layers.Dense(64, activation='relu'),  # ✅ Match saved weights
+            tf.keras.layers.Dense(5, activation='softmax')
         ])
 
-        # Load weights only
         model.load_weights(MODEL_PATH)
 
-        # Warm-up
-        _ = model.predict(np.zeros((1, 128, 128, 3)))
+        # Warm-up call
+        _ = model.predict(np.zeros((1, 128, 128, 3), dtype=np.float32))
 
-        st.success("✅ Model loaded successfully (weights only)")
+        st.success("✅ Model loaded successfully with matching architecture")
         return model
 
     except Exception as e:
         st.error(f"❌ Model loading failed: {str(e)}")
         st.stop()
+
 
 def process_image(image):
     """Standardize image preprocessing"""
