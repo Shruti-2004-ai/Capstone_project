@@ -8,7 +8,7 @@ import streamlit as st
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 import tensorflow as tf
-
+from tensorflow import keras
 # ====== Configuration ======
 st.set_page_config(
     page_title="Rice Classifier Pro",
@@ -44,7 +44,7 @@ def load_model():
         st.stop()
     
     try:
-        model = keras.models.load_model("prohect/rice_classifier.h5")
+        model = keras.models.load_model("rice_classifier.h5")
 
         st.success("✅ Model loaded successfully from rice_classifier.h5")
         
