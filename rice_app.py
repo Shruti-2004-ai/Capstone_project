@@ -44,7 +44,8 @@ def load_model():
         st.stop()
     
     try:
-        model = tf.keras.models.load_model(MODEL_PATH)
+        model = keras.models.load_model("prohect/rice_classifier.h5")
+
         st.success("✅ Model loaded successfully from rice_classifier.h5")
         
         # Warm-up prediction
