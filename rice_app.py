@@ -33,16 +33,37 @@ for file, headers in [(PREDICTION_LOG, ['timestamp', 'filename', 'predicted_clas
 # ====== Core Functions ======
 @st.cache_resource
 def load_model():
-    """Load and warm up the model"""
+    """Load model without deserialization issues by reconstructing architecture."""
+    if not os.path.exists(MODEL_PATH):
+        st.error(f"❌ Model file not found: {MODEL_PATH}")
+        st.stop()
+
     try:
-        model = tf.keras.models.load_model("rice_classifier.h5")
-        # ✅ Warm-up with correct input shape
-        warm_up_data = np.zeros((1, 128, 128, 3), dtype=np.float32)
-        model.predict(warm_up_data)
+        # Rebuild the model architecture
+        model = keras.Sequential([
+            keras.layers.Input(shape=(128, 128, 3)),  # Avoid using 'batch_shape'
+            keras.layers.Conv2D(32, (3, 3), activation='relu'),
+            keras.layers.MaxPooling2D((2, 2)),
+            keras.layers.Conv2D(64, (3, 3), activation='relu'),
+            keras.layers.MaxPooling2D((2, 2)),
+            keras.layers.Flatten(),
+            keras.layers.Dense(128, activation='relu'),
+            keras.layers.Dense(5, activation='softmax')  # Assuming 5 rice classes
+        ])
+
+        # Load weights only
+        model.load_weights(MODEL_PATH)
+
+        # Warm-up
+        _ = model.predict(np.zeros((1, 128, 128, 3)))
+
+        st.success("✅ Model loaded successfully (weights only)")
         return model
+
     except Exception as e:
         st.error(f"❌ Model loading failed: {str(e)}")
         st.stop()
+
 
 def process_image(image):
     """Standardize image preprocessing"""
