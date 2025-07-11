@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image, UnidentifiedImageError
 import tensorflow as tf
 from tensorflow import keras
-# ====== Configuration ======
+# ====== Configuration ======9
 st.set_page_config(
     page_title="Rice Classifier Pro",
     page_icon="🍚",
@@ -44,7 +44,7 @@ def load_model():
         st.stop()
     
     try:
-        model = keras.models.load_model("rice_classifier.h5")
+        model = keras.models.load_model("rice_classifier.keras")
 
         st.success("✅ Model loaded successfully from rice_classifier.h5")
         
