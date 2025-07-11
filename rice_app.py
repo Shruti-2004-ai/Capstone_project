@@ -4,23 +4,20 @@ import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from io import StringIO
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import streamlit as st
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 import tensorflow as tf
-from tensorflow import keras
-# ====== Configuration ======9
-st.set_page_config(
-    page_title="Rice Classifier Pro",
-    page_icon="🍚",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
-# Set TensorFlow log level
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# Streamlit Cloud config
+if st.secrets.get("DEPLOYED", False):
+    MODEL_PATH = "rice_classifier.keras"  # Use relative path in cloud
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Reduce cloud logs
 
-# Model and data paths
+
+# ====== Configuration ======
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "rice_classifier.keras")
 CLASS_NAMES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag']
@@ -37,31 +34,21 @@ for file, headers in [(PREDICTION_LOG, ['timestamp', 'filename', 'predicted_clas
 # ====== Core Functions ======
 @st.cache_resource
 def load_model():
-    """Load model from rice_classifier.keras"""
-    if not os.path.exists(MODEL_PATH):
-        st.error(f"❌ Model file not found: {MODEL_PATH}")
-        st.error("Please ensure 'rice_classifier.keras' exists in your project directory")
-        st.stop()
-    
+    """Load and warm up the model"""
     try:
-        model = keras.models.load_model(MODEL_PATH)
-
-        st.success("✅ Model loaded successfully from rice_classifier.keras")
-        
-        # Warm-up prediction
+        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+        # ✅ Warm-up with correct input shape
         warm_up_data = np.zeros((1, 128, 128, 3), dtype=np.float32)
         model.predict(warm_up_data)
         return model
     except Exception as e:
-        st.error(f"❌ Failed to load model: {str(e)}")
-        st.error("The .keras file may be corrupted or incompatible")
+        st.error(f"❌ Model loading failed: {str(e)}")
         st.stop()
-
 
 def process_image(image):
     """Standardize image preprocessing"""
     try:
-        img = image.resize((128, 128))  # Match model input shape
+        img = image.resize((128, 128))  # ✅ Match model input shape
         arr = np.array(img)
         
         # Handle various image formats
@@ -74,6 +61,7 @@ def process_image(image):
     except Exception as e:
         st.error(f"Image processing error: {str(e)}")
         return None
+
 
 def log_data(filepath, data):
     """Thread-safe CSV logging"""
@@ -126,6 +114,13 @@ def load_logs():
         return pd.DataFrame(), pd.DataFrame(), None
 
 # ====== Streamlit UI ======
+st.set_page_config(
+    page_title="Rice Classifier Pro",
+    page_icon="🍚",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 def main():
     model = load_model()
 
@@ -183,7 +178,7 @@ def main():
                                 "probs": preds.tolist()
                             }
 
-                            # Log prediction
+                            # Log
                             log_data(PREDICTION_LOG, [
                                 datetime.datetime.now().isoformat(),
                                 st.session_state.get("img_name", "unknown"),
@@ -201,6 +196,7 @@ def main():
             st.metric("Confidence", f"{pred['confidence']:.1f}%")
             st.pyplot(plot_probabilities(pred["probs"]))
             st.info("Not quite right? Provide feedback below to help us improve!")
+
 
             # Feedback section
             with st.expander("✏️ Provide Feedback", expanded=False):
@@ -221,21 +217,23 @@ def main():
                     )
 
                 if st.button("Submit Feedback", key="feedback_btn"):
-                    try:
-                        if actual_class:
-                            log_data(FEEDBACK_LOG, [
-                                datetime.datetime.now().isoformat(),
-                                pred["class"],
-                                actual_class,
-                                feedback_text
-                            ])
-                            st.toast("✅ Feedback submitted successfully!")
-                            st.session_state["feedback_class"] = ""
-                            st.session_state["feedback_text"] = ""
-                        else:
-                            st.warning("Please select the actual rice variety")
-                    except Exception as e:
-                        st.error(f"Feedback submission failed: {str(e)}")
+    try:
+        if actual_class:
+            log_data(FEEDBACK_LOG, [
+                datetime.datetime.now().isoformat(),
+                pred["class"],
+                actual_class,
+                feedback_text
+            ])
+            st.toast("✅ Feedback submitted successfully!")
+
+            # Clear feedback fields
+            st.session_state["feedback_class"] = ""
+            st.session_state["feedback_text"] = ""
+        else:
+            st.warning("Please select the actual rice variety")
+    except Exception as e:
+        st.error(f"Feedback submission failed: {str(e)}")
 
     # ====== Analytics Dashboard ======
     st.sidebar.header("📊 Analytics Dashboard")
@@ -267,14 +265,15 @@ def main():
                 # Confusion matrix
                 st.subheader("Confusion Matrix")
                 confusion = pd.crosstab(
-                    feedback_df['predicted_class'],
-                    feedback_df['actual_class'],
-                    margins=True
-                ).reindex(
-                    index=CLASS_NAMES + ['All'],
-                    columns=CLASS_NAMES + ['All'],
-                    fill_value=0
-                )
+    feedback_df['predicted_class'],
+    feedback_df['actual_class'],
+    margins=True
+).reindex(
+    index=CLASS_NAMES + ['All'],
+    columns=CLASS_NAMES + ['All'],
+    fill_value=0
+)
+
                 st.dataframe(confusion.style.background_gradient(cmap='Blues'))
         else:
             st.info("No feedback data yet")
