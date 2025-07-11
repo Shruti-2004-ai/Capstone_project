@@ -40,17 +40,16 @@ def load_model():
 
     try:
         # Rebuild the model architecture
-        model = keras.Sequential([
-            keras.layers.Input(shape=(128, 128, 3)),  # Avoid using 'batch_shape'
-            keras.layers.Conv2D(32, (3, 3), activation='relu'),
-            keras.layers.MaxPooling2D((2, 2)),
-            keras.layers.Conv2D(64, (3, 3), activation='relu'),
-            keras.layers.MaxPooling2D((2, 2)),
-            keras.layers.Flatten(),
-            keras.layers.Dense(128, activation='relu'),
-            keras.layers.Dense(5, activation='softmax')  # Assuming 5 rice classes
-        ])
-
+       model = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(128, 128, 3)),  # Removed batch_shape
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(5, activation='softmax')  # Assuming 5 rice classes
+])
         # Load weights only
         model.load_weights(MODEL_PATH)
 
