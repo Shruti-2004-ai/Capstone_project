@@ -22,7 +22,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Model and data paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "rice_classifier.h5")  # Changed to .h5
+MODEL_PATH = os.path.join(BASE_DIR, "rice_classifier.keras")
 CLASS_NAMES = ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag']
 PREDICTION_LOG = os.path.join(BASE_DIR, "predictions.csv")
 FEEDBACK_LOG = os.path.join(BASE_DIR, "feedback.csv")
@@ -36,17 +36,18 @@ for file, headers in [(PREDICTION_LOG, ['timestamp', 'filename', 'predicted_clas
 
 # ====== Core Functions ======
 @st.cache_resource
+d@st.cache_resource
 def load_model():
-    """Load model exclusively from rice_classifier.h5"""
+    """Load model from rice_classifier.keras"""
     if not os.path.exists(MODEL_PATH):
         st.error(f"❌ Model file not found: {MODEL_PATH}")
-        st.error("Please ensure 'rice_classifier.h5' exists in your project directory")
+        st.error("Please ensure 'rice_classifier.keras' exists in your project directory")
         st.stop()
     
     try:
-        model = keras.models.load_model("rice_classifier.keras")
+        model = keras.models.load_model(MODEL_PATH)
 
-        st.success("✅ Model loaded successfully from rice_classifier.h5")
+        st.success("✅ Model loaded successfully from rice_classifier.keras")
         
         # Warm-up prediction
         warm_up_data = np.zeros((1, 128, 128, 3), dtype=np.float32)
@@ -54,8 +55,9 @@ def load_model():
         return model
     except Exception as e:
         st.error(f"❌ Failed to load model: {str(e)}")
-        st.error("The .h5 file may be corrupted or incompatible")
+        st.error("The .keras file may be corrupted or incompatible")
         st.stop()
+
 
 def process_image(image):
     """Standardize image preprocessing"""
