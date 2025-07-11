@@ -13,7 +13,7 @@ import tensorflow as tf
 
 # Streamlit Cloud config
 if st.secrets.get("DEPLOYED", False):
-    MODEL_PATH = "rice_classifier.keras"  # Use relative path in cloud
+    MODEL_PATH = "rice_classifier.h5"  # Use relative path in cloud
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Reduce cloud logs
 
 # ====== Configuration ======
@@ -35,7 +35,7 @@ for file, headers in [(PREDICTION_LOG, ['timestamp', 'filename', 'predicted_clas
 def load_model():
     """Load and warm up the model"""
     try:
-        model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+        model = tf.keras.models.load_model("rice_classifier.h5")
         # ✅ Warm-up with correct input shape
         warm_up_data = np.zeros((1, 128, 128, 3), dtype=np.float32)
         model.predict(warm_up_data)
