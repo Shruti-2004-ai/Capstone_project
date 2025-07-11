@@ -36,7 +36,6 @@ for file, headers in [(PREDICTION_LOG, ['timestamp', 'filename', 'predicted_clas
 
 # ====== Core Functions ======
 @st.cache_resource
-d@st.cache_resource
 def load_model():
     """Load model from rice_classifier.keras"""
     if not os.path.exists(MODEL_PATH):
